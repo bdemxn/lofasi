@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "bu98eYrvbyc=",
+  "dgSpecHash": "vU00hxG/vxc=",
   "success": true,
   "projectFilePath": "/home/bdemxn/Projects/lofasi/src/Lofasi.Application/Lofasi.Application.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/bdemxn/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.10/microsoft.extensions.dependencyinjection.abstractions.10.0.10.nupkg.sha512"
+  ],
   "logs": []
 }

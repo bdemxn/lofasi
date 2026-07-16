@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Lofasi.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4b5af637d923256a28b9a388ef4a27f18aa0fbb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+feb8cba99cb238328a81f418191e42963205b94a")]
 [assembly: System.Reflection.AssemblyProductAttribute("Lofasi.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Lofasi.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
