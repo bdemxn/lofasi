@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-format:
+    name: Test and Format
+    runs-on: ubuntu-latest
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore Lofasi.slnx
+
+      - name: Verify code style
+        run: dotnet format style Lofasi.slnx --no-restore --verify-no-changes --severity info
+
+      - name: Verify namespace conventions
+        run: dotnet format analyzers Lofasi.slnx --no-restore --verify-no-changes --diagnostics IDE0130 --severity info
+
+      - name: Build
+        run: dotnet build Lofasi.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Lofasi.slnx --configuration Release --no-restore --no-build --verbosity normal
