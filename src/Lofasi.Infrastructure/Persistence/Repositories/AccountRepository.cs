@@ -4,23 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lofasi.Infrastructure.Persistence.Repositories;
 
-public sealed class AccountRepository : IAccountRepository
+public sealed class AccountRepository(BankingDbContext dbContext) : IAccountRepository
 {
-    private readonly BankingDbContext _dbContext;
-
-    public AccountRepository(BankingDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task AddAsync(BankAccount account, CancellationToken cancellationToken)
     {
-        await _dbContext.BankAccounts.AddAsync(account, cancellationToken);
+        await dbContext.BankAccounts.AddAsync(account, cancellationToken);
     }
 
     public async Task<bool> ExistsByAccountNumberAsync(string accountNumber, CancellationToken cancellationToken)
     {
-        return await _dbContext.BankAccounts.AnyAsync(
+        return await dbContext.BankAccounts.AnyAsync(
             account => account.AccountNumber == accountNumber,
             cancellationToken);
     }
@@ -30,7 +23,7 @@ public sealed class AccountRepository : IAccountRepository
         Guid userId,
         CancellationToken cancellationToken)
     {
-        return await _dbContext.BankAccounts
+        return await dbContext.BankAccounts
             .Include(account => account.Customer)
             .Include(account => account.Transactions)
             .SingleOrDefaultAsync(

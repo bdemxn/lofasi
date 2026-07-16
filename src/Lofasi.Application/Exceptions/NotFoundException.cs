@@ -1,9 +1,3 @@
 namespace Lofasi.Application.Exceptions;
 
-public sealed class NotFoundException : BusinessException
-{
-    public NotFoundException(string message)
-        : base(message)
-    {
-    }
-}
+public sealed class NotFoundException(string message) : BusinessException(message);

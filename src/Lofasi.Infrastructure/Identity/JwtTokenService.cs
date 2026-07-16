@@ -7,19 +7,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Lofasi.Infrastructure.Identity;
 
-public sealed class JwtTokenService : IJwtTokenService
+public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptions) : IJwtTokenService
 {
-    private readonly JwtOptions _jwtOptions;
-
-    public JwtTokenService(IOptions<JwtOptions> jwtOptions)
-    {
-        _jwtOptions = jwtOptions.Value;
-    }
-
     public JwtTokenResult CreateToken(Guid userId, string email)
     {
-        var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(_jwtOptions.ExpirationMinutes);
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret));
+        var options = jwtOptions.Value;
+        var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(options.ExpirationMinutes);
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -30,8 +24,8 @@ public sealed class JwtTokenService : IJwtTokenService
         };
 
         var token = new JwtSecurityToken(
-            _jwtOptions.Issuer,
-            _jwtOptions.Audience,
+            options.Issuer,
+            options.Audience,
             claims,
             expires: expiresAtUtc.UtcDateTime,
             signingCredentials: credentials);

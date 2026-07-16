@@ -10,44 +10,23 @@ using Lofasi.Domain.ValueObjects;
 
 namespace Lofasi.Application.Accounts;
 
-public sealed class AccountService : IAccountService
+public sealed class AccountService(
+    IAccountRepository accountRepository,
+    ICustomerRepository customerRepository,
+    IUnitOfWork unitOfWork,
+    IAccountNumberGenerator accountNumberGenerator,
+    ICurrentUserService currentUserService,
+    IDateTimeProvider dateTimeProvider) : IAccountService
 {
     private const int AccountNumberGenerationAttempts = 10;
-
-    private readonly IAccountRepository _accountRepository;
-    private readonly ICustomerRepository _customerRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IAccountNumberGenerator _accountNumberGenerator;
-    private readonly ICurrentUserService _currentUserService;
-    private readonly IDateTimeProvider _dateTimeProvider;
-
-    public AccountService(
-        IAccountRepository accountRepository,
-        ICustomerRepository customerRepository,
-        IUnitOfWork unitOfWork,
-        IAccountNumberGenerator accountNumberGenerator,
-        ICurrentUserService currentUserService,
-        IDateTimeProvider dateTimeProvider)
-    {
-        _accountRepository = accountRepository;
-        _customerRepository = customerRepository;
-        _unitOfWork = unitOfWork;
-        _accountNumberGenerator = accountNumberGenerator;
-        _currentUserService = currentUserService;
-        _dateTimeProvider = dateTimeProvider;
-    }
 
     public async Task<AccountResponse> CreateAsync(CreateAccountRequest request, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
-        var customer = await _customerRepository.GetByUserIdAsync(userId, cancellationToken);
+        var customer = await customerRepository.GetByUserIdAsync(userId, cancellationToken)
+            ?? throw new NotFoundException("Customer profile was not found.");
 
-        if (customer is null)
-        {
-            throw new NotFoundException("Customer profile was not found.");
-        }
-
-        var createdAtUtc = _dateTimeProvider.UtcNow;
+        var createdAtUtc = dateTimeProvider.UtcNow;
         var accountNumber = await GenerateUniqueAccountNumberAsync(createdAtUtc, cancellationToken);
         var openingBalanceInCents = ToCents(request.OpeningBalance);
 
@@ -57,8 +36,8 @@ public sealed class AccountService : IAccountService
             openingBalanceInCents,
             createdAtUtc);
 
-        await _accountRepository.AddAsync(account, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await accountRepository.AddAsync(account, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return MapAccount(account);
     }
@@ -80,9 +59,9 @@ public sealed class AccountService : IAccountService
     {
         var account = await GetOwnedAccountAsync(accountNumber, cancellationToken);
         var amountInCents = ToPositiveCents(request.Amount);
-        var transaction = account.Deposit(amountInCents, _dateTimeProvider.UtcNow);
+        var transaction = account.Deposit(amountInCents, dateTimeProvider.UtcNow);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return MapTransaction(transaction);
     }
@@ -100,9 +79,9 @@ public sealed class AccountService : IAccountService
             throw new InsufficientFundsException("Insufficient funds.");
         }
 
-        var transaction = account.Withdraw(amountInCents, _dateTimeProvider.UtcNow);
+        var transaction = account.Withdraw(amountInCents, dateTimeProvider.UtcNow);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return MapTransaction(transaction);
     }
@@ -113,36 +92,31 @@ public sealed class AccountService : IAccountService
     {
         var account = await GetOwnedAccountAsync(accountNumber, cancellationToken);
 
-        return account.Transactions
+        return [.. account.Transactions
             .OrderBy(transaction => transaction.OccurredAtUtc)
-            .Select(MapTransaction)
-            .ToArray();
+            .Select(MapTransaction)];
     }
 
     private async Task<BankAccount> GetOwnedAccountAsync(string accountNumber, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
-        var account = await _accountRepository.GetByAccountNumberForUserAsync(
+        var account = await accountRepository.GetByAccountNumberForUserAsync(
             accountNumber,
             userId,
-            cancellationToken);
-
-        if (account is null)
-        {
-            throw new NotFoundException("Account was not found.");
-        }
+            cancellationToken)
+            ?? throw new NotFoundException("Account was not found.");
 
         return account;
     }
 
     private Guid GetCurrentUserId()
     {
-        if (!_currentUserService.IsAuthenticated)
+        if (!currentUserService.IsAuthenticated)
         {
             throw new UnauthenticatedException("Authentication is required.");
         }
 
-        return _currentUserService.UserId;
+        return currentUserService.UserId;
     }
 
     private async Task<string> GenerateUniqueAccountNumberAsync(
@@ -153,9 +127,9 @@ public sealed class AccountService : IAccountService
 
         for (var attempt = 0; attempt < AccountNumberGenerationAttempts; attempt++)
         {
-            var accountNumber = _accountNumberGenerator.Generate(creationDate);
+            var accountNumber = accountNumberGenerator.Generate(creationDate);
 
-            if (!await _accountRepository.ExistsByAccountNumberAsync(accountNumber, cancellationToken))
+            if (!await accountRepository.ExistsByAccountNumberAsync(accountNumber, cancellationToken))
             {
                 return accountNumber;
             }

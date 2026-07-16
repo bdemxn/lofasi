@@ -10,30 +10,17 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Lofasi.Infrastructure.Identity;
 
-public sealed class IdentityService : IAuthService
+public sealed class IdentityService(
+    UserManager<ApplicationUser> userManager,
+    IJwtTokenService jwtTokenService,
+    IDateTimeProvider dateTimeProvider,
+    BankingDbContext dbContext) : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IJwtTokenService _jwtTokenService;
-    private readonly IDateTimeProvider _dateTimeProvider;
-    private readonly BankingDbContext _dbContext;
-
-    public IdentityService(
-        UserManager<ApplicationUser> userManager,
-        IJwtTokenService jwtTokenService,
-        IDateTimeProvider dateTimeProvider,
-        BankingDbContext dbContext)
-    {
-        _userManager = userManager;
-        _jwtTokenService = jwtTokenService;
-        _dateTimeProvider = dateTimeProvider;
-        _dbContext = dbContext;
-    }
-
     public async Task<AuthResponse> RegisterAsync(RegisterCustomerRequest request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim();
 
-        if (await _userManager.FindByEmailAsync(normalizedEmail) is not null)
+        if (await userManager.FindByEmailAsync(normalizedEmail) is not null)
         {
             throw new ConflictException("A user with the supplied email already exists.");
         }
@@ -53,21 +40,21 @@ public sealed class IdentityService : IAuthService
             request.DateOfBirth,
             request.Gender,
             monthlyIncomeInCents,
-            _dateTimeProvider.UtcNow);
+            dateTimeProvider.UtcNow);
 
         user.CustomerId = customer.Id;
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
         {
             throw new ValidationException(string.Join(" ", result.Errors.Select(error => error.Description)));
         }
 
-        await _dbContext.Customers.AddAsync(customer, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.Customers.AddAsync(customer, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         return CreateAuthResponse(user, customer.Id);
@@ -75,14 +62,10 @@ public sealed class IdentityService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        var user = await userManager.FindByEmailAsync(request.Email.Trim())
+            ?? throw new InvalidCredentialsException("Invalid email or password.");
 
-        if (user is null)
-        {
-            throw new InvalidCredentialsException("Invalid email or password.");
-        }
-
-        var passwordIsValid = await _userManager.CheckPasswordAsync(user, request.Password);
+        var passwordIsValid = await userManager.CheckPasswordAsync(user, request.Password);
 
         if (!passwordIsValid)
         {
@@ -99,7 +82,7 @@ public sealed class IdentityService : IAuthService
 
     private AuthResponse CreateAuthResponse(ApplicationUser user, Guid customerId)
     {
-        var token = _jwtTokenService.CreateToken(user.Id, user.Email ?? string.Empty);
+        var token = jwtTokenService.CreateToken(user.Id, user.Email ?? string.Empty);
 
         return new AuthResponse(
             token.AccessToken,

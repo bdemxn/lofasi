@@ -1,9 +1,3 @@
 namespace Lofasi.Application.Exceptions;
 
-public sealed class UnauthenticatedException : BusinessException
-{
-    public UnauthenticatedException(string message)
-        : base(message)
-    {
-    }
-}
+public sealed class UnauthenticatedException(string message) : BusinessException(message);

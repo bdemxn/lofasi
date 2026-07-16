@@ -6,13 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lofasi.Infrastructure.Persistence;
 
-public sealed class BankingDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
-    public BankingDbContext(DbContextOptions<BankingDbContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<Customer> Customers => Set<Customer>();
 
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();

@@ -1,9 +1,3 @@
 namespace Lofasi.Application.Exceptions;
 
-public sealed class ValidationException : BusinessException
-{
-    public ValidationException(string message)
-        : base(message)
-    {
-    }
-}
+public sealed class ValidationException(string message) : BusinessException(message);
