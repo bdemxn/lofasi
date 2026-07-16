@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Lofasi.API/Lofasi.API.csproj" />
+    <Project Path="src/Lofasi.Application/Lofasi.Application.csproj" />
+    <Project Path="src/Lofasi.Domain/Lofasi.Domain.csproj" />
+    <Project Path="src/Lofasi.Infrastructure/Lofasi.Infrastructure.csproj" />
+  </Folder>
 </Solution>
