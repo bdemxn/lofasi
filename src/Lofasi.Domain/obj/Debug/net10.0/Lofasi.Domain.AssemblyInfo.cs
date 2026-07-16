@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Lofasi.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3666cea9166821921b9c98658c727b25ac6788fd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4b5af637d923256a28b9a388ef4a27f18aa0fbb")]
 [assembly: System.Reflection.AssemblyProductAttribute("Lofasi.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Lofasi.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

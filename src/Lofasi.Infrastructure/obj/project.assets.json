@@ -1,11 +1,48 @@
 {
   "version": 4,
   "targets": {
-    "net10.0": {}
+    "net10.0": {
+      "Lofasi.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Lofasi.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Lofasi.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Lofasi.Application.dll": {}
+        }
+      },
+      "Lofasi.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/Lofasi.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Lofasi.Domain.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Lofasi.Application/1.0.0": {
+      "type": "project",
+      "path": "../Lofasi.Application/Lofasi.Application.csproj",
+      "msbuildProject": "../Lofasi.Application/Lofasi.Application.csproj"
+    },
+    "Lofasi.Domain/1.0.0": {
+      "type": "project",
+      "path": "../Lofasi.Domain/Lofasi.Domain.csproj",
+      "msbuildProject": "../Lofasi.Domain/Lofasi.Domain.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net10.0": []
+    "net10.0": [
+      "Lofasi.Application >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "/home/bdemxn/.nuget/packages/": {}
@@ -32,7 +69,11 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "/home/bdemxn/Projects/lofasi/src/Lofasi.Application/Lofasi.Application.csproj": {
+              "projectPath": "/home/bdemxn/Projects/lofasi/src/Lofasi.Application/Lofasi.Application.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
