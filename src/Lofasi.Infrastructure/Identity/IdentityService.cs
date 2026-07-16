@@ -1,0 +1,123 @@
+using Lofasi.Application.Abstractions.Authentication;
+using Lofasi.Application.Abstractions.Clock;
+using Lofasi.Application.Auth;
+using Lofasi.Application.Auth.Dtos;
+using Lofasi.Application.Exceptions;
+using Lofasi.Domain.Entities;
+using Lofasi.Domain.ValueObjects;
+using Lofasi.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
+
+namespace Lofasi.Infrastructure.Identity;
+
+public sealed class IdentityService : IAuthService
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IJwtTokenService _jwtTokenService;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly BankingDbContext _dbContext;
+
+    public IdentityService(
+        UserManager<ApplicationUser> userManager,
+        IJwtTokenService jwtTokenService,
+        IDateTimeProvider dateTimeProvider,
+        BankingDbContext dbContext)
+    {
+        _userManager = userManager;
+        _jwtTokenService = jwtTokenService;
+        _dateTimeProvider = dateTimeProvider;
+        _dbContext = dbContext;
+    }
+
+    public async Task<AuthResponse> RegisterAsync(RegisterCustomerRequest request, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = request.Email.Trim();
+
+        if (await _userManager.FindByEmailAsync(normalizedEmail) is not null)
+        {
+            throw new ConflictException("A user with the supplied email already exists.");
+        }
+
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
+            EmailConfirmed = true
+        };
+
+        var monthlyIncomeInCents = ToCents(request.MonthlyIncome);
+        var customer = new Customer(
+            user.Id,
+            request.FullName,
+            request.DateOfBirth,
+            request.Gender,
+            monthlyIncomeInCents,
+            _dateTimeProvider.UtcNow);
+
+        user.CustomerId = customer.Id;
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var result = await _userManager.CreateAsync(user, request.Password);
+
+        if (!result.Succeeded)
+        {
+            throw new ValidationException(string.Join(" ", result.Errors.Select(error => error.Description)));
+        }
+
+        await _dbContext.Customers.AddAsync(customer, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return CreateAuthResponse(user, customer.Id);
+    }
+
+    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+
+        if (user is null)
+        {
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        var passwordIsValid = await _userManager.CheckPasswordAsync(user, request.Password);
+
+        if (!passwordIsValid)
+        {
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        if (user.CustomerId is null)
+        {
+            throw new NotFoundException("Customer profile was not found.");
+        }
+
+        return CreateAuthResponse(user, user.CustomerId.Value);
+    }
+
+    private AuthResponse CreateAuthResponse(ApplicationUser user, Guid customerId)
+    {
+        var token = _jwtTokenService.CreateToken(user.Id, user.Email ?? string.Empty);
+
+        return new AuthResponse(
+            token.AccessToken,
+            token.ExpiresAtUtc,
+            user.Id,
+            customerId,
+            user.Email ?? string.Empty);
+    }
+
+    private static long ToCents(decimal amount)
+    {
+        try
+        {
+            return Money.ToCents(amount);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new ValidationException(exception.Message);
+        }
+    }
+}
