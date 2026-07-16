@@ -5,4 +5,7 @@
     <Project Path="src/Lofasi.Domain/Lofasi.Domain.csproj" />
     <Project Path="src/Lofasi.Infrastructure/Lofasi.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Lofasi.UnitTests/Lofasi.UnitTests.csproj" />
+  </Folder>
 </Solution>
