@@ -5,7 +5,9 @@ using Lofasi.Application;
 using Lofasi.Application.Abstractions.Authentication;
 using Lofasi.Infrastructure;
 using Lofasi.Infrastructure.Identity;
+using Lofasi.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -77,6 +79,13 @@ builder
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<BankingDbContext>();
+    dbContext.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {

@@ -3,3 +3,5 @@ bin/
 obj/
 
 lofasi.db
+*.db-shm
+*.db-wal

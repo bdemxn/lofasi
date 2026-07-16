@@ -1,0 +1,12 @@
+.git/
+.vs/
+.vscode/
+bin/
+obj/
+**/bin/
+**/obj/
+.env*
+lofasi.db
+*.db
+*.db-shm
+*.db-wal

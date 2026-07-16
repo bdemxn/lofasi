@@ -270,6 +270,47 @@ Nota: el secreto JWT incluido es solo para desarrollo local. En un ambiente real
 
 ## Ejecutar El Proyecto
 
+### Inicializacion Automatizada
+
+Se agregaron scripts para inicializar el proyecto de forma repetible en Linux/macOS y Windows.
+
+Los scripts hacen lo siguiente:
+
+- Restauran paquetes NuGet.
+- Restauran la herramienta local `dotnet-ef` desde `.config/dotnet-tools.json`.
+- Ejecutan las migraciones de EF Core.
+- Crean o actualizan la base SQLite `lofasi.db`.
+- Compilan la solucion.
+- Opcionalmente ejecutan la API.
+
+Linux/macOS:
+
+```bash
+./scripts/init.sh
+```
+
+Linux/macOS inicializando y ejecutando la API:
+
+```bash
+./scripts/init.sh --run
+```
+
+Windows PowerShell:
+
+```powershell
+.\scripts\init.ps1
+```
+
+Windows PowerShell inicializando y ejecutando la API:
+
+```powershell
+.\scripts\init.ps1 -Run
+```
+
+Estos scripts son la forma recomendada de levantar el proyecto por primera vez porque automatizan la creacion de la base de datos.
+
+### Comandos Manuales
+
 Restaurar paquetes:
 
 ```bash
@@ -313,11 +354,93 @@ dotnet ef migrations add InitialCreate --project src/Lofasi.Infrastructure --sta
 dotnet ef database update --project src/Lofasi.Infrastructure --startup-project src/Lofasi.API
 ```
 
+En este repositorio ya existe una migracion inicial en:
+
+```text
+src/Lofasi.Infrastructure/Persistence/Migrations
+```
+
+Por eso, para crear la base local solo se necesita ejecutar:
+
+```bash
+dotnet tool restore
+dotnet tool run dotnet-ef database update --project src/Lofasi.Infrastructure --startup-project src/Lofasi.API --context BankingDbContext
+```
+
+Los scripts `scripts/init.sh` y `scripts/init.ps1` ejecutan esos pasos automaticamente.
+
 Importante: si `dotnet ef` no está instalado:
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
+
+Nota: este proyecto usa una herramienta local de .NET, por lo que no es obligatorio instalar `dotnet-ef` globalmente si se usa `dotnet tool restore`.
+
+## Docker
+
+Se agrego un `Dockerfile` multi-stage.
+
+El contenedor publica la API en el puerto interno `8080` y usa SQLite en `/data/lofasi.db` por defecto.
+
+Construir la imagen:
+
+```bash
+docker build -t lofasi-api .
+```
+
+Ejecutar el contenedor:
+
+```bash
+docker run --rm -p 8080:8080 -v lofasi-data:/data lofasi-api
+```
+
+La API quedara disponible en:
+
+```text
+http://localhost:8080
+```
+
+Swagger en Docker:
+
+```text
+http://localhost:8080/swagger
+```
+
+Para habilitar Swagger dentro del contenedor, ejecutar con ambiente `Development`:
+
+```bash
+docker run --rm -p 8080:8080 -v lofasi-data:/data -e ASPNETCORE_ENVIRONMENT=Development lofasi-api
+```
+
+El Dockerfile define:
+
+```text
+ConnectionStrings__Database=Data Source=/data/lofasi.db
+Database__ApplyMigrationsOnStartup=true
+```
+
+Esto significa que, al iniciar el contenedor, la API aplica automaticamente las migraciones pendientes y crea la base SQLite si no existe.
+
+Para usar otro archivo de base de datos:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v lofasi-data:/data \
+  -e ConnectionStrings__Database="Data Source=/data/custom-lofasi.db" \
+  lofasi-api
+```
+
+Para definir un secreto JWT diferente en Docker:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v lofasi-data:/data \
+  -e Jwt__Secret="replace-this-with-a-long-secure-secret-for-local-docker" \
+  lofasi-api
+```
+
+Importante: en produccion no se debe usar el secreto JWT incluido en `appsettings.json`.
 
 ## Autenticación En Swagger
 
