@@ -9,6 +9,7 @@ public sealed class AccountTransactionConfiguration : IEntityTypeConfiguration<A
     public void Configure(EntityTypeBuilder<AccountTransaction> builder)
     {
         builder.HasKey(transaction => transaction.Id);
+        builder.Property(transaction => transaction.Id).ValueGeneratedNever();
 
         builder.Property(transaction => transaction.BankAccountId).IsRequired();
         builder.Property(transaction => transaction.Type).IsRequired();

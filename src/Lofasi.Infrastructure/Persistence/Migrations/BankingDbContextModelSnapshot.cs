@@ -20,7 +20,6 @@ namespace Lofasi.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Lofasi.Domain.Entities.AccountTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("AmountInCents")
@@ -48,7 +47,6 @@ namespace Lofasi.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Lofasi.Domain.Entities.BankAccount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AccountNumber")
@@ -78,7 +76,6 @@ namespace Lofasi.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Lofasi.Domain.Entities.Customer", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")

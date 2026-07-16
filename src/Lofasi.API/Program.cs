@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Lofasi.API.ExceptionHandling;
 using Lofasi.API.Services;
 using Lofasi.Application;
@@ -13,7 +14,10 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
@@ -39,7 +43,14 @@ builder.Services.AddSwaggerGen(options =>
             Scheme = "bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Enter a valid JWT bearer token. Example: Bearer eyJhbGciOi...",
+            Description = "Paste only the raw JWT token returned by /api/auth/login or /api/auth/register. Do not include the 'Bearer ' prefix.",
+        }
+    );
+
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document, externalResource: null)] = [],
         }
     );
 

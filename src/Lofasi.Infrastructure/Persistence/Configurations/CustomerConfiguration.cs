@@ -9,6 +9,7 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
     public void Configure(EntityTypeBuilder<Customer> builder)
     {
         builder.HasKey(customer => customer.Id);
+        builder.Property(customer => customer.Id).ValueGeneratedNever();
 
         builder.Property(customer => customer.UserId).IsRequired();
         builder.HasIndex(customer => customer.UserId).IsUnique();

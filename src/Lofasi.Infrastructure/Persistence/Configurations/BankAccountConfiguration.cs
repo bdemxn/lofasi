@@ -9,6 +9,7 @@ public sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAcco
     public void Configure(EntityTypeBuilder<BankAccount> builder)
     {
         builder.HasKey(account => account.Id);
+        builder.Property(account => account.Id).ValueGeneratedNever();
 
         builder.Property(account => account.CustomerId).IsRequired();
 
